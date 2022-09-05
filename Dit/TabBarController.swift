@@ -19,7 +19,7 @@ final class TabBarController: UITabBarController {
 
 
 private extension TabBarController {
-    func setupTabBar() {
+    func setupTabBar() {        
         let homeVC = UINavigationController(rootViewController: HomeViewController())
         homeVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), selectedImage: UIImage(systemName: "house.fill"))
         

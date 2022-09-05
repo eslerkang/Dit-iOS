@@ -10,15 +10,24 @@ import SnapKit
 
 
 final class HomeViewController: UIViewController {
-    private let tableSection = [
-        "My Work"
-    ]
+    
+    
+    private lazy var progressBar: UIProgressView = {
+        let view = UIProgressView(progressViewStyle: .bar)
+        view.trackTintColor = .secondaryLabel
+        view.progressTintColor = .systemBlue
+        view.progress = 0.5
+        
+        return view
+    }()
     
     private lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.delegate = self
         tableView.dataSource = self
         tableView.allowsSelection = true
+        tableView.showsVerticalScrollIndicator = false
+        tableView.showsHorizontalScrollIndicator = false
         
         return tableView
     }()
@@ -34,7 +43,18 @@ final class HomeViewController: UIViewController {
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
+        return 100
+    }
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let view = UIView()
+        view.addSubview(progressBar)
+        
+        return view
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -42,47 +62,48 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         
         var content = cell.defaultContentConfiguration()
         content.text = "hihi"
-        content.image = UIImage(systemName: "seal.fill")
+        content.image = UIImage(systemName: "circle")
         
         cell.contentConfiguration = content
+        cell.selectionStyle = .none
 
         return cell
     }
     
-    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    
-    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let hideAction = UIContextualAction(style: .destructive, title: "Hide", handler: { action, view, handler in
-            print(indexPath)
-            handler(true)
-        })
-        return UISwipeActionsConfiguration(actions: [hideAction])
-    }
-    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(indexPath)
-    }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 44
+        print("hi")
+        progressBar.setProgress(progressBar.progress + 0.1, animated: true)
     }
 }
 
 
 private extension HomeViewController {
     func setupNavigation() {
-        navigationItem.title = "Home"
+        navigationItem.title = "Main"
         navigationController?.navigationBar.prefersLargeTitles = true
+        let branchButtonItem = UIBarButtonItem(title: "branches", style: .plain, target: self, action: #selector(tapBranchButton))
+        let plusButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: #selector(tapPlusButton))
+        navigationItem.rightBarButtonItems = [branchButtonItem, plusButtonItem]
     }
     
     func setupLayout() {
-        view.addSubview(tableView)
+        [
+            tableView
+        ].forEach {
+            view.addSubview($0)
+        }
         
         tableView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide).offset(20)
+            $0.top.equalTo(view.safeAreaLayoutGuide)
             $0.leading.trailing.bottom.equalToSuperview()
         }
+    }
+    
+    @objc func tapPlusButton() {
+        print("hih")
+    }
+    
+    @objc func tapBranchButton() {
+        print("bebe")
     }
 }
