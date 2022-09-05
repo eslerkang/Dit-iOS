@@ -10,5 +10,19 @@ import SnapKit
 
 
 final class TabBarController: UITabBarController {
-    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        setupTabBar()
+    }
+}
+
+
+private extension TabBarController {
+    func setupTabBar() {
+        let homeVC = UINavigationController(rootViewController: HomeViewController())
+        homeVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), selectedImage: UIImage(systemName: "house.fill"))
+        
+        viewControllers = [homeVC]
+    }
 }
