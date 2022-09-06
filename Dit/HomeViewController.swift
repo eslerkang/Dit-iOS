@@ -79,7 +79,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
 
 private extension HomeViewController {
     func setupNavigation() {
-        navigationItem.title = "Main"
+        navigationItem.title = "Today"
         navigationController?.navigationBar.prefersLargeTitles = true
         let branchButtonItem = UIBarButtonItem(title: "branches", style: .plain, target: self, action: #selector(tapBranchButton))
         let plusButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: #selector(tapPlusButton))
