@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import CoreData
+import UserNotifications
 
 
 final class HomeViewController: UIViewController {
@@ -42,6 +43,8 @@ final class HomeViewController: UIViewController {
         
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
         self.container = appDelegate.persistentContainer
+        
+        authorizeNotification()
         
         setupNavigation()
         setupLayout()
@@ -79,12 +82,14 @@ extension HomeViewController: UISearchBarDelegate {
         
         todos.append(Todo(text: text, isDone: false, createdAt: date, uuid: uuid))
         
-        tableView.reloadData()
+        reloadTableView()
     }
 }
 
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
+    
+    
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
@@ -217,7 +222,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
             return
         }
         
-        tableView.reloadData()
+        reloadTableView()
     }
 }
 
@@ -266,7 +271,7 @@ private extension HomeViewController {
             return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid)
         }
 
-        tableView.reloadData()
+        reloadTableView()
     }
     
     func setupNavigation() {
@@ -287,6 +292,20 @@ private extension HomeViewController {
             $0.top.equalTo(view.safeAreaLayoutGuide)
             $0.leading.trailing.bottom.equalToSuperview()
         }
+    }
+    
+    func reloadTableView() {
+        tableView.reloadData()
+        UIApplication.shared.applicationIconBadgeNumber = todos.count
+    }
+    
+    func authorizeNotification() {
+        UNUserNotificationCenter.current()
+            .requestAuthorization(options: [.badge], completionHandler: { _, error in
+                if let error = error {
+                    print("ERROR: \(error.localizedDescription)")
+                }
+            })
     }
     
     @objc func tapPlusButton() {
