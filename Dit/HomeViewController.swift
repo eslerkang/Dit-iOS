@@ -10,23 +10,17 @@ import SnapKit
 
 
 final class HomeViewController: UIViewController {
+    private var todos = [(String, Bool)]()
+    
     private lazy var searchController: UISearchController = {
         let searchController = UISearchController()
         searchController.searchBar.setImage(UIImage(systemName: "arrow.up.doc"), for: .search, state: .normal)
         searchController.searchBar.returnKeyType = .done
         searchController.searchBar.placeholder = "dit add todo"
+        searchController.obscuresBackgroundDuringPresentation = true
         searchController.searchBar.delegate = self
         
         return searchController
-    }()
-    
-    private lazy var progressBar: UIProgressView = {
-        let view = UIProgressView(progressViewStyle: .bar)
-        view.trackTintColor = .secondaryLabel
-        view.progressTintColor = .systemBlue
-        view.progress = 0.5
-        
-        return view
     }()
     
     private lazy var tableView: UITableView = {
@@ -57,33 +51,35 @@ extension HomeViewController: UISearchBarDelegate {
             searchBar.text = ""
             return
         }
-        print(text)
+        
+        todos.append((text, false))
+        tableView.reloadData()
+        
+        searchBar.text = ""
+        searchBar.becomeFirstResponder()
     }
 }
 
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
+        return todos.count
+    }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        return "\(todos.count) todos to commit"
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
-    
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let view = UIView()
-        view.addSubview(progressBar)
-        
-        return view
-    }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell()
         
         var content = cell.defaultContentConfiguration()
-        content.text = "hihi"
-        content.image = UIImage(systemName: "circle")
+        content.text = todos[indexPath.row].0
+        content.image = UIImage(systemName: todos[indexPath.row].1 ? "circle.fill" : "circle")
         
         cell.contentConfiguration = content
         cell.selectionStyle = .none
@@ -91,20 +87,36 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        return .delete
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        todos.remove(at: indexPath.row)
+        tableView.reloadData()
+    }
+    
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print("hi")
-        progressBar.setProgress(progressBar.progress + 0.1, animated: true)
+        todos[indexPath.row].1 = true
+        tableView.reloadRows(at: [indexPath], with: .automatic)
+        todos.remove(at: indexPath.row)
+        UIView.animate(withDuration: 0.5, delay: 0.3, animations: {
+            tableView.deleteRows(at: [indexPath], with: .fade)
+            tableView.reloadData()
+        })
     }
 }
 
 
 private extension HomeViewController {
     func setupNavigation() {
-        navigationItem.title = "File changes"
+        navigationItem.title = "Todo changes"
         navigationController?.navigationBar.prefersLargeTitles = true
-        let branchButtonItem = UIBarButtonItem(title: "branches", style: .plain, target: self, action: #selector(tapBranchButton))
-        let plusButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: #selector(tapPlusButton))
-        navigationItem.rightBarButtonItems = [branchButtonItem, plusButtonItem]
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
     }
