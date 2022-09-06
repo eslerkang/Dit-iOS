@@ -7,10 +7,12 @@
 
 import UIKit
 import SnapKit
+import CoreData
 
 
 final class HomeViewController: UIViewController {
-    private var todos = [(String, Bool)]()
+    var container: NSPersistentContainer!
+    private var todos = [Todo]()
     
     private lazy var searchController: UISearchController = {
         let searchController = UISearchController()
@@ -37,8 +39,12 @@ final class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        self.container = appDelegate.persistentContainer
+        
         setupNavigation()
         setupLayout()
+        fetchTodos()
     }
 }
 
@@ -51,12 +57,26 @@ extension HomeViewController: UISearchBarDelegate {
             searchBar.text = ""
             return
         }
+        let date = Date()
         
-        todos.append((text, false))
-        tableView.reloadData()
+        let todo = Todos(context: container.viewContext)
+        todo.text = text
+        todo.isDone = false
+        todo.createdAt = date
         
         searchBar.text = ""
         searchBar.becomeFirstResponder()
+
+        do {
+            try container.viewContext.save()
+        } catch {
+            print("ERROR: \(error.localizedDescription)")
+            return
+        }
+        
+        todos.append(Todo(text: text, isDone: false, createdAt: date))
+        
+        tableView.reloadData()
     }
 }
 
@@ -78,8 +98,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         let cell = UITableViewCell()
         
         var content = cell.defaultContentConfiguration()
-        content.text = todos[indexPath.row].0
-        content.image = UIImage(systemName: todos[indexPath.row].1 ? "circle.fill" : "circle")
+        content.text = todos[indexPath.row].text
+        content.image = UIImage(systemName: todos[indexPath.row].isDone ? "circle.fill" : "circle")
         
         cell.contentConfiguration = content
         cell.selectionStyle = .none
@@ -102,18 +122,27 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        todos[indexPath.row].1 = true
-        tableView.reloadRows(at: [indexPath], with: .automatic)
-        todos.remove(at: indexPath.row)
-        UIView.animate(withDuration: 0.5, delay: 0.3, animations: {
-            tableView.deleteRows(at: [indexPath], with: .fade)
-            tableView.reloadData()
-        })
     }
 }
 
 
 private extension HomeViewController {
+    func fetchTodos() {
+        let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
+        let data = try! container.viewContext.fetch(readRequest)
+        
+        self.todos = data.compactMap { todo in
+            guard let text = todo.value(forKey: "text") as? String,
+                  let isDone = todo.value(forKey: "isDone") as? Bool,
+                  let createdAt = todo.value(forKey: "createdAt") as? Date
+            else {
+                return nil
+            }
+            
+            return Todo(text: text, isDone: isDone, createdAt: createdAt)
+        }
+    }
+    
     func setupNavigation() {
         navigationItem.title = "Todo changes"
         navigationController?.navigationBar.prefersLargeTitles = true
