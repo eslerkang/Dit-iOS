@@ -16,9 +16,10 @@ extension Todos {
         return NSFetchRequest<Todos>(entityName: "Todos")
     }
 
-    @NSManaged public var text: String?
-    @NSManaged public var isDone: Bool
     @NSManaged public var createdAt: Date?
+    @NSManaged public var isDone: Bool
+    @NSManaged public var text: String?
+    @NSManaged public var uuid: UUID?
 
 }
 

@@ -12,4 +12,5 @@ struct Todo {
     let text: String
     var isDone: Bool
     let createdAt: Date
+    let uuid: UUID
 }

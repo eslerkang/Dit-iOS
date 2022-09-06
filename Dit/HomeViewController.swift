@@ -59,11 +59,13 @@ extension HomeViewController: UISearchBarDelegate {
             return
         }
         let date = Date()
+        let uuid = UUID()
         
         let todo = Todos(context: container.viewContext)
         todo.text = text
         todo.isDone = false
         todo.createdAt = date
+        todo.uuid = uuid
         
         searchBar.text = ""
         searchBar.becomeFirstResponder()
@@ -75,7 +77,7 @@ extension HomeViewController: UISearchBarDelegate {
             return
         }
         
-        todos.append(Todo(text: text, isDone: false, createdAt: date))
+        todos.append(Todo(text: text, isDone: false, createdAt: date, uuid: uuid))
         
         tableView.reloadData()
     }
@@ -134,44 +136,55 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
-    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    
-    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
-        return .delete
-    }
-    
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        todos.remove(at: indexPath.row)
-        tableView.reloadData()
-    }
-    
-    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        var todo = todos[indexPath.row]
-        todo.isDone = true
-        
-        let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-        let isDonePredicate = NSPredicate(format: "isDone == NO")
-        let createdAtPredicate = NSPredicate(format: "createdAt == %@", todo.createdAt as CVarArg)
-        let textPredicate = NSPredicate(format: "text == %@", todo.text)
-        readRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [isDonePredicate, createdAtPredicate, textPredicate])
-        
-        do {
-            let data = try container.viewContext.fetch(readRequest)
-            let targetTodo = data[0]
+        switch indexPath.section {
+        case 0:
+            var todo = todos[indexPath.row]
+            todo.isDone = true
             
-            targetTodo.setValue(true, forKey: "isDone")
+            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
+            readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
             
-            try container.viewContext.save()
-        } catch {
-            print("ERROR: \(error.localizedDescription)")
+            do {
+                let data = try container.viewContext.fetch(readRequest)
+                let targetTodo = data[0]
+                
+                targetTodo.setValue(true, forKey: "isDone")
+                
+                try container.viewContext.save()
+            } catch {
+                print("ERROR: \(error.localizedDescription)")
+                return
+            }
+            
+            todos.remove(at: indexPath.row)
+            done.append(todo)
+        case 1:
+            var todo = done[indexPath.row]
+            todo.isDone = false
+            
+            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
+            readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
+            
+            do {
+                let data = try container.viewContext.fetch(readRequest)
+                let targetTodo = data[0]
+                
+                targetTodo.setValue(true, forKey: "isDone")
+                
+                try container.viewContext.save()
+            } catch {
+                print("ERROR: \(error.localizedDescription)")
+                return
+            }
+            done.remove(at: indexPath.row)
+            todos.append(todo)
+            
+        default:
             return
         }
         
-        todos.remove(at: indexPath.row)
-        done.append(todo)
+        
         tableView.reloadData()
     }
 }
@@ -194,11 +207,12 @@ private extension HomeViewController {
         self.todos = todosData.compactMap { todo in
             guard let text = todo.value(forKey: "text") as? String,
                   let isDone = todo.value(forKey: "isDone") as? Bool,
-                  let createdAt = todo.value(forKey: "createdAt") as? Date
+                  let createdAt = todo.value(forKey: "createdAt") as? Date,
+                  let uuid = todo.value(forKey: "uuid") as? UUID
             else {
                 return nil
             }
-            return Todo(text: text, isDone: isDone, createdAt: createdAt)
+            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid)
         }
         
         let readDoneRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
@@ -212,11 +226,12 @@ private extension HomeViewController {
         self.done = doneData.compactMap { todo in
             guard let text = todo.value(forKey: "text") as? String,
                   let isDone = todo.value(forKey: "isDone") as? Bool,
-                  let createdAt = todo.value(forKey: "createdAt") as? Date
+                  let createdAt = todo.value(forKey: "createdAt") as? Date,
+                  let uuid = todo.value(forKey: "uuid") as? UUID
             else {
                 return nil
             }
-            return Todo(text: text, isDone: isDone, createdAt: createdAt)
+            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid)
         }
 
         tableView.reloadData()
