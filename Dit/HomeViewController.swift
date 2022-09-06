@@ -76,7 +76,7 @@ extension HomeViewController: UISearchBarDelegate {
         do {
             try container.viewContext.save()
         } catch {
-            print("ERROR: \(error.localizedDescription)")
+            print("ERROR: Creating Todo / \(error.localizedDescription)")
             return
         }
         
@@ -100,26 +100,92 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
             let commitAction = UIContextualAction(
                 style: .normal,
                 title: "commit") { action, view, handler in
-                    print("hihi")
+                    var todo = self.todos[indexPath.row]
+                    todo.isDone = true
+                    
+                    let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
+                    readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
+                    
+                    do {
+                        let data = try self.container.viewContext.fetch(readRequest)
+                        let targetTodo = data[0]
+                        
+                        targetTodo.setValue(true, forKey: "isDone")
+                        
+                        try self.container.viewContext.save()
+                    } catch {
+                        print("ERROR: Commiting todo / \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    self.todos.remove(at: indexPath.row)
+                    self.done.append(todo)
+                    self.reloadTableView()
                     handler(true)
                 }
             
             return UISwipeActionsConfiguration(actions: [commitAction])
         case 1:
-            return nil
+            let resetAction = UIContextualAction(
+                style: .destructive,
+                title: "reset") { action, view, handler in
+                    var todo = self.done[indexPath.row]
+                    todo.isDone = false
+                    
+                    let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
+                    readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
+                    
+                    do {
+                        let data = try self.container.viewContext.fetch(readRequest)
+                        let targetTodo = data[0]
+                        
+                        targetTodo.setValue(false, forKey: "isDone")
+                        
+                        try self.container.viewContext.save()
+                    } catch {
+                        print("ERROR: Reseting Todo / \(error.localizedDescription)")
+                        return
+                    }
+                    self.done.remove(at: indexPath.row)
+                    self.todos.append(todo)
+                    self.reloadTableView()
+                    handler(true)
+                }
+            
+            return UISwipeActionsConfiguration(actions: [resetAction])
         default:
             return nil
         }
     }
     
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        if indexPath.section == 0 {
+            return .delete
+        }
+        
+        return .none
+    }
+    
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        switch indexPath.section {
-        case 0:
-            print("hihi")
-        case 1:
-            return
-        default:
-            return
+        if indexPath.section == 0 {
+            let todo = todos[indexPath.row]
+            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
+            readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
+            
+            do {
+                let data = try container.viewContext.fetch(readRequest)
+                let targetTodo = data[0]
+                
+                container.viewContext.delete(targetTodo)
+                
+                try container.viewContext.save()
+            } catch {
+                print("ERROR: Deleting row at \(indexPath.row) / \(error.localizedDescription)")
+                return
+            }
+            
+            todos.remove(at: indexPath.row)
+            reloadTableView()
         }
     }
     
@@ -172,57 +238,6 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         cell.selectionStyle = .none
 
         return cell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        switch indexPath.section {
-        case 0:
-            var todo = todos[indexPath.row]
-            todo.isDone = true
-            
-            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-            readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
-            
-            do {
-                let data = try container.viewContext.fetch(readRequest)
-                let targetTodo = data[0]
-                
-                targetTodo.setValue(true, forKey: "isDone")
-                
-                try container.viewContext.save()
-            } catch {
-                print("ERROR: \(error.localizedDescription)")
-                return
-            }
-            
-            todos.remove(at: indexPath.row)
-            done.append(todo)
-        case 1:
-            var todo = done[indexPath.row]
-            todo.isDone = false
-            
-            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-            readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
-            
-            do {
-                let data = try container.viewContext.fetch(readRequest)
-                let targetTodo = data[0]
-                
-                targetTodo.setValue(false, forKey: "isDone")
-                
-                try container.viewContext.save()
-            } catch {
-                print("ERROR: \(error.localizedDescription)")
-                return
-            }
-            done.remove(at: indexPath.row)
-            todos.append(todo)
-            
-        default:
-            return
-        }
-        
-        reloadTableView()
     }
 }
 
