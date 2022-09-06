@@ -10,7 +10,15 @@ import SnapKit
 
 
 final class HomeViewController: UIViewController {
-    
+    private lazy var searchController: UISearchController = {
+        let searchController = UISearchController()
+        searchController.searchBar.setImage(UIImage(systemName: "arrow.up.doc"), for: .search, state: .normal)
+        searchController.searchBar.returnKeyType = .done
+        searchController.searchBar.placeholder = "dit add todo"
+        searchController.searchBar.delegate = self
+        
+        return searchController
+    }()
     
     private lazy var progressBar: UIProgressView = {
         let view = UIProgressView(progressViewStyle: .bar)
@@ -41,9 +49,22 @@ final class HomeViewController: UIViewController {
 }
 
 
+extension HomeViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        guard let text = searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty
+        else {
+            searchBar.text = ""
+            return
+        }
+        print(text)
+    }
+}
+
+
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 100
+        return 10
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -79,11 +100,13 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
 
 private extension HomeViewController {
     func setupNavigation() {
-        navigationItem.title = "Today"
+        navigationItem.title = "File changes"
         navigationController?.navigationBar.prefersLargeTitles = true
         let branchButtonItem = UIBarButtonItem(title: "branches", style: .plain, target: self, action: #selector(tapBranchButton))
         let plusButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), style: .plain, target: self, action: #selector(tapPlusButton))
         navigationItem.rightBarButtonItems = [branchButtonItem, plusButtonItem]
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
     }
     
     func setupLayout() {
