@@ -85,6 +85,39 @@ extension HomeViewController: UISearchBarDelegate {
 
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        switch indexPath.section {
+        case 0:
+            let commitAction = UIContextualAction(
+                style: .normal,
+                title: "commit") { action, view, handler in
+                    print("hihi")
+                    handler(true)
+                }
+            
+            return UISwipeActionsConfiguration(actions: [commitAction])
+        case 1:
+            return nil
+        default:
+            return nil
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        switch indexPath.section {
+        case 0:
+            print("hihi")
+        case 1:
+            return
+        default:
+            return
+        }
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0:
@@ -170,7 +203,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
                 let data = try container.viewContext.fetch(readRequest)
                 let targetTodo = data[0]
                 
-                targetTodo.setValue(true, forKey: "isDone")
+                targetTodo.setValue(false, forKey: "isDone")
                 
                 try container.viewContext.save()
             } catch {
@@ -183,7 +216,6 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         default:
             return
         }
-        
         
         tableView.reloadData()
     }
