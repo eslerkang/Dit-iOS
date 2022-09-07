@@ -13,5 +13,5 @@ struct Todo {
     var isDone: Bool
     let createdAt: Date
     let uuid: UUID
-    let updatedAt: Date
+    var updatedAt: Date
 }

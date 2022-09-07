@@ -13,6 +13,8 @@ import UserNotifications
 
 final class HomeViewController: UIViewController {
     var container: NSPersistentContainer!
+    var context: NSManagedObjectContext!
+    
     private var todos = [Todo]()
     private var done = [Todo]()
     
@@ -42,7 +44,8 @@ final class HomeViewController: UIViewController {
         super.viewDidLoad()
         
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        self.container = appDelegate.persistentContainer
+        container = appDelegate.persistentContainer
+        context = container.viewContext
         
         authorizeNotification()
         
@@ -58,7 +61,7 @@ extension HomeViewController: UISearchBarDelegate {
         guard let text = searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !text.isEmpty
         else {
-            searchBar.text = ""
+            searchController.isActive = false
             return
         }
         let date = Date()
@@ -69,8 +72,8 @@ extension HomeViewController: UISearchBarDelegate {
         todo.isDone = false
         todo.createdAt = date
         todo.uuid = uuid
+        todo.updatedAt = date
         
-        searchBar.text = ""
         view.endEditing(true)
 
         do {
@@ -93,6 +96,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let date = Date()
+
         switch indexPath.section {
         case 0:
             let commitAction = UIContextualAction(
@@ -100,18 +105,19 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
                 title: "commit") { action, view, handler in
                     var todo = self.todos[indexPath.row]
                     todo.isDone = true
+                    todo.updatedAt = date
                     
                     let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
                     readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
                     
                     do {
-                        let data = try self.container.viewContext.fetch(readRequest)
+                        let data = try self.context.fetch(readRequest)
                         let targetTodo = data[0]
                         
                         targetTodo.setValue(true, forKey: "isDone")
-                        targetTodo.setValue(Date(), forKey: "updatedAt")
+                        targetTodo.setValue(date, forKey: "updatedAt")
                         
-                        try self.container.viewContext.save()
+                        try self.context.save()
                     } catch {
                         print("ERROR: Commiting todo / \(error.localizedDescription)")
                         return
@@ -130,18 +136,19 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
                 title: "reset") { action, view, handler in
                     var todo = self.done[indexPath.row]
                     todo.isDone = false
+                    todo.updatedAt = date
                     
                     let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
                     readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
                     
                     do {
-                        let data = try self.container.viewContext.fetch(readRequest)
+                        let data = try self.context.fetch(readRequest)
                         let targetTodo = data[0]
                         
                         targetTodo.setValue(false, forKey: "isDone")
-                        targetTodo.setValue(Date(), forKey: "updatedAt")
+                        targetTodo.setValue(date, forKey: "updatedAt")
                         
-                        try self.container.viewContext.save()
+                        try self.context.save()
                     } catch {
                         print("ERROR: Reseting Todo / \(error.localizedDescription)")
                         return
@@ -173,12 +180,12 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
             readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
             
             do {
-                let data = try container.viewContext.fetch(readRequest)
+                let data = try context.fetch(readRequest)
                 let targetTodo = data[0]
                 
-                container.viewContext.delete(targetTodo)
+                context.delete(targetTodo)
                 
-                try container.viewContext.save()
+                try context.save()
             } catch {
                 print("ERROR: Deleting row at \(indexPath.row) / \(error.localizedDescription)")
                 return
@@ -254,7 +261,7 @@ private extension HomeViewController {
         
         let readTodosRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
         readTodosRequest.predicate = NSPredicate(format: "isDone == NO")
-        let todosData = try! container.viewContext.fetch(readTodosRequest)
+        let todosData = try! context.fetch(readTodosRequest)
         
         self.todos = todosData.compactMap { todo in
             guard let text = todo.value(forKey: "text") as? String,
@@ -274,7 +281,7 @@ private extension HomeViewController {
         let isDonePredicate = NSPredicate(format: "isDone == YES")
         let compound = NSCompoundPredicate(andPredicateWithSubpredicates: [todayPredicate, tomorrowPredicate, isDonePredicate])
         readDoneRequest.predicate = compound
-        let doneData = try! container.viewContext.fetch(readDoneRequest)
+        let doneData = try! context.fetch(readDoneRequest)
         
         self.done = doneData.compactMap { todo in
             guard let text = todo.value(forKey: "text") as? String,
@@ -323,13 +330,5 @@ private extension HomeViewController {
                     print("ERROR: \(error.localizedDescription)")
                 }
             })
-    }
-    
-    @objc func tapPlusButton() {
-        print("hih")
-    }
-    
-    @objc func tapBranchButton() {
-        print("bebe")
     }
 }
