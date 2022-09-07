@@ -21,7 +21,7 @@ final class ProfileViewController: UIViewController {
     
     private lazy var monthLabel: UILabel = {
         let label = UILabel()
-        label.text = "Your contributions in this month"
+        label.text = "Your this month's contributions"
         label.font = .systemFont(ofSize: 20, weight: .regular)
         
         return label
@@ -72,12 +72,18 @@ final class ProfileViewController: UIViewController {
         setupNavigation()
         setupLayout()
     }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        fetchData()
+    }
 }
 
 
 extension ProfileViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 35
+        return contributions.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -86,7 +92,7 @@ extension ProfileViewController: UICollectionViewDelegateFlowLayout, UICollectio
             return UICollectionViewCell()
         }
         
-        cell.setup()
+        cell.setup(contribution: contributions[indexPath.row])
         
         return cell
     }
@@ -100,7 +106,31 @@ extension ProfileViewController: UICollectionViewDelegateFlowLayout, UICollectio
 
 private extension ProfileViewController {
     func fetchData() {
+        let calendar = Calendar(identifier: .gregorian)
+        let today = calendar.startOfDay(for: Date())
         
+        contributions = []
+        
+        for i in 0..<35 {
+            guard let startDate = calendar.date(byAdding: .day, value: -34+i, to: today),
+                  let endDate = calendar.date(byAdding: .day, value: 1, to: startDate)
+            else {
+                return
+            }
+            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
+            
+            let isDonePredicate = NSPredicate(format: "isDone == YES")
+            let startDatePredicate = NSPredicate(format: "updatedAt >= %@", startDate as CVarArg)
+            let endDatePredicate = NSPredicate(format: "updatedAt < %@", endDate as CVarArg)
+            
+            readRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [isDonePredicate, startDatePredicate, endDatePredicate])
+            
+            let data = try! context.fetch(readRequest)
+            
+            contributions.append(Contribution(date: startDate, commit: data.count))
+        }
+                
+        monthCollectionView.reloadData()
     }
     
     func setupNavigation() {
