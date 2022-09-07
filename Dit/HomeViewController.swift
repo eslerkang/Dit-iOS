@@ -81,16 +81,8 @@ extension HomeViewController: UISearchBarDelegate {
         }
         
         todos.append(Todo(text: text, isDone: false, createdAt: date, uuid: uuid))
-        
+        searchController.isActive = false
         reloadTableView()
-    }
-    
-    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        tableView.isHidden = false
-    }
-    
-    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-        tableView.isHidden = true
     }
 }
 
