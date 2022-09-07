@@ -21,7 +21,7 @@ final class HomeViewController: UIViewController {
         searchController.searchBar.setImage(UIImage(systemName: "arrow.up.doc"), for: .search, state: .normal)
         searchController.searchBar.returnKeyType = .done
         searchController.searchBar.placeholder = "dit add todo"
-        searchController.obscuresBackgroundDuringPresentation = true
+        searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.delegate = self
         
         return searchController
@@ -71,7 +71,7 @@ extension HomeViewController: UISearchBarDelegate {
         todo.uuid = uuid
         
         searchBar.text = ""
-        searchBar.becomeFirstResponder()
+        view.endEditing(true)
 
         do {
             try container.viewContext.save()
@@ -84,12 +84,18 @@ extension HomeViewController: UISearchBarDelegate {
         
         reloadTableView()
     }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        tableView.isHidden = false
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        tableView.isHidden = true
+    }
 }
 
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
-    
-    
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
