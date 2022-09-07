@@ -14,7 +14,7 @@ final class ProfileViewController: UIViewController {
     var container: NSPersistentContainer!
     var context: NSManagedObjectContext!
     
-    private var contributions = [Int]()
+    private var contributions = [Contribution]()
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
