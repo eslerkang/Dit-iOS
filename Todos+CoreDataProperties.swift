@@ -2,7 +2,7 @@
 //  Todos+CoreDataProperties.swift
 //  Dit
 //
-//  Created by 강태준 on 2022/09/06.
+//  Created by 강태준 on 2022/09/07.
 //
 //
 
@@ -20,6 +20,7 @@ extension Todos {
     @NSManaged public var isDone: Bool
     @NSManaged public var text: String?
     @NSManaged public var uuid: UUID?
+    @NSManaged public var updatedAt: Date?
 
 }
 

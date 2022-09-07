@@ -80,7 +80,7 @@ extension HomeViewController: UISearchBarDelegate {
             return
         }
         
-        todos.append(Todo(text: text, isDone: false, createdAt: date, uuid: uuid))
+        todos.append(Todo(text: text, isDone: false, createdAt: date, uuid: uuid, updatedAt: date))
         searchController.isActive = false
         reloadTableView()
     }
@@ -109,6 +109,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
                         let targetTodo = data[0]
                         
                         targetTodo.setValue(true, forKey: "isDone")
+                        targetTodo.setValue(Date(), forKey: "updatedAt")
                         
                         try self.container.viewContext.save()
                     } catch {
@@ -138,6 +139,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
                         let targetTodo = data[0]
                         
                         targetTodo.setValue(false, forKey: "isDone")
+                        targetTodo.setValue(Date(), forKey: "updatedAt")
                         
                         try self.container.viewContext.save()
                     } catch {
@@ -258,16 +260,17 @@ private extension HomeViewController {
             guard let text = todo.value(forKey: "text") as? String,
                   let isDone = todo.value(forKey: "isDone") as? Bool,
                   let createdAt = todo.value(forKey: "createdAt") as? Date,
+                  let updatedAt = todo.value(forKey: "updatedAt") as? Date,
                   let uuid = todo.value(forKey: "uuid") as? UUID
             else {
                 return nil
             }
-            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid)
+            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
         }
         
         let readDoneRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-        let todayPredicate = NSPredicate(format: "createdAt >= %@", today as CVarArg)
-        let tomorrowPredicate = NSPredicate(format: "createdAt < %@", tomorrow as CVarArg)
+        let todayPredicate = NSPredicate(format: "updatedAt >= %@", today as CVarArg)
+        let tomorrowPredicate = NSPredicate(format: "updatedAt < %@", tomorrow as CVarArg)
         let isDonePredicate = NSPredicate(format: "isDone == YES")
         let compound = NSCompoundPredicate(andPredicateWithSubpredicates: [todayPredicate, tomorrowPredicate, isDonePredicate])
         readDoneRequest.predicate = compound
@@ -277,11 +280,12 @@ private extension HomeViewController {
             guard let text = todo.value(forKey: "text") as? String,
                   let isDone = todo.value(forKey: "isDone") as? Bool,
                   let createdAt = todo.value(forKey: "createdAt") as? Date,
+                  let updatedAt = todo.value(forKey: "updatedAt") as? Date,
                   let uuid = todo.value(forKey: "uuid") as? UUID
             else {
                 return nil
             }
-            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid)
+            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
         }
 
         reloadTableView()
