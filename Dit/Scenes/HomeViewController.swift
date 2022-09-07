@@ -254,8 +254,7 @@ private extension HomeViewController {
         let calnedar = Calendar(identifier: .gregorian)
         let today = calnedar.startOfDay(for: Date())
         guard let tomorrow = calnedar.date(byAdding: .day, value: 1, to: today)
-        else
-        {
+        else {
             return
         }
         
