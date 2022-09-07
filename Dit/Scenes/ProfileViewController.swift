@@ -14,17 +14,29 @@ final class ProfileViewController: UIViewController {
     var container: NSPersistentContainer!
     var context: NSManagedObjectContext!
     
+    private var contributions = [Int]()
+    
     private let scrollView = UIScrollView()
     private let contentView = UIView()
+    
+    private lazy var monthLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Your contributions in this month"
+        label.font = .systemFont(ofSize: 20, weight: .regular)
+        
+        return label
+    }()
     
     private lazy var monthCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
+        layout.minimumLineSpacing = 0.0
+        layout.minimumInteritemSpacing = 0.0
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.delegate = self
         collectionView.dataSource = self
         
-        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "collectionViewCell")
+        collectionView.register(ContributionCollectionViewCell.self, forCellWithReuseIdentifier: "collectionViewCell")
         
         return collectionView
     }()
@@ -34,12 +46,14 @@ final class ProfileViewController: UIViewController {
         stackView.axis = .vertical
         stackView.distribution = .equalSpacing
         stackView.alignment = .fill
+        stackView.spacing = 8
         
         monthCollectionView.snp.makeConstraints {
-            $0.height.equalTo((view.frame.width - 40) / 7 * 5)
+            $0.height.equalTo((view.frame.width - 40) / 7 * 5.1)
         }
         
         [
+            monthLabel,
             monthCollectionView
         ].forEach {
             stackView.addArrangedSubview($0)
@@ -67,29 +81,28 @@ extension ProfileViewController: UICollectionViewDelegateFlowLayout, UICollectio
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "collectionViewCell", for: indexPath)
-        cell.backgroundColor = .green
-        cell.layer.cornerRadius = 12
-
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "collectionViewCell", for: indexPath) as? ContributionCollectionViewCell
+        else {
+            return UICollectionViewCell()
+        }
+        
+        cell.setup()
+        
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = collectionView.frame.width / 8
+        let width = collectionView.frame.width / 7
         return CGSize(width: width, height: width)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 5
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 5
     }
 }
 
 
 private extension ProfileViewController {
+    func fetchData() {
+        
+    }
+    
     func setupNavigation() {
         navigationItem.title = "Contributions"
         navigationController?.navigationBar.prefersLargeTitles = true
