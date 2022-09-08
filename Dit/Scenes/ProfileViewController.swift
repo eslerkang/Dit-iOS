@@ -188,7 +188,7 @@ private extension ProfileViewController {
             $0.width.equalTo(150)
         }
         
-        UIView.animate(withDuration: 2.0, delay: 0.1, options: .curveEaseOut, animations: {
+        UIView.animate(withDuration: 2.0, delay: 0.5, options: .curveEaseOut, animations: {
             toastLabel.alpha = 0.0
         }, completion: { _ in
             toastLabel.removeFromSuperview()
