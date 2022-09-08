@@ -101,6 +101,17 @@ extension ProfileViewController: UICollectionViewDelegateFlowLayout, UICollectio
         let width = collectionView.frame.width / 7
         return CGSize(width: width, height: width)
     }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let contribution = contributions[indexPath.row]
+        let date = dateToSting(date: contribution.date)
+        let message = "\(date)\n\(contribution.commit) commits"
+        
+        showToast(
+            message: message,
+            font: .systemFont(ofSize: 16, weight: .regular)
+        )
+    }
 }
 
 
@@ -155,5 +166,40 @@ private extension ProfileViewController {
         stackView.snp.makeConstraints {
             $0.edges.equalToSuperview().inset(20)
         }
+    }
+    
+    func showToast(message : String, font: UIFont) {
+        let toastLabel = UILabel()
+        
+        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        toastLabel.textColor = UIColor.white
+        toastLabel.font = font
+        toastLabel.textAlignment = .center;
+        toastLabel.text = message
+        toastLabel.layer.cornerRadius = 10;
+        toastLabel.clipsToBounds  =  true
+        toastLabel.numberOfLines = 2
+        
+        view.addSubview(toastLabel)
+        toastLabel.snp.makeConstraints {
+            $0.bottom.equalToSuperview().inset(100)
+            $0.centerX.equalToSuperview()
+            $0.height.equalTo(50)
+            $0.width.equalTo(150)
+        }
+        
+        UIView.animate(withDuration: 4.0, delay: 0.1, options: .curveEaseOut, animations: {
+            toastLabel.alpha = 0.0
+        }, completion: { _ in
+            toastLabel.removeFromSuperview()
+        })
+    }
+    
+    func dateToSting(date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko")
+        formatter.dateFormat = "yyyy-MM-dd"
+        
+        return formatter.string(from: date)
     }
 }
