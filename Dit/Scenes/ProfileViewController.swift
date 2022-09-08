@@ -171,8 +171,8 @@ private extension ProfileViewController {
     func showToast(message : String, font: UIFont) {
         let toastLabel = UILabel()
         
-        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        toastLabel.textColor = UIColor.white
+        toastLabel.backgroundColor = UIColor.label.withAlphaComponent(0.5)
+        toastLabel.textColor = UIColor.systemBackground
         toastLabel.font = font
         toastLabel.textAlignment = .center;
         toastLabel.text = message
@@ -188,7 +188,7 @@ private extension ProfileViewController {
             $0.width.equalTo(150)
         }
         
-        UIView.animate(withDuration: 4.0, delay: 0.1, options: .curveEaseOut, animations: {
+        UIView.animate(withDuration: 2.0, delay: 0.1, options: .curveEaseOut, animations: {
             toastLabel.alpha = 0.0
         }, completion: { _ in
             toastLabel.removeFromSuperview()
