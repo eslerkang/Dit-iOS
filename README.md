@@ -13,8 +13,8 @@
 - (will have) Widget extension
 
 ## :fireworks: Screenshots
-![IMG_2141](https://user-images.githubusercontent.com/31269150/188958024-a258df82-fd88-4cbb-87e7-d94112fd82ec.PNG)
-![IMG_2152](https://user-images.githubusercontent.com/31269150/188958168-ed13dd97-b6b3-4d57-ae93-41c0f0d3fada.PNG)
+![IMG_2143](https://user-images.githubusercontent.com/31269150/189031531-de7bb6ac-4e55-4ecf-b4f5-5ee26dc9b913.png)
+![IMG_2152](https://user-images.githubusercontent.com/31269150/189031538-6aaebf24-df5a-432c-bfb2-f04ea03c6b65.png)
 
 
 ## :sparkles: Skills & Tech Stack
