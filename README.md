@@ -24,6 +24,8 @@
 ### 1.0.1
 - Add Toast message of contribution information
 - Add App Store informations
+### 1.0.2
+- Change Toast message remaining time
 
 ## :sparkles: Skills & Tech Stack
 UIKit, Snapkit, CoreData
