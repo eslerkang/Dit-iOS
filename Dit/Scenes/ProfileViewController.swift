@@ -197,8 +197,8 @@ private extension ProfileViewController {
     
     func dateToSting(date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko")
-        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale.current
+        formatter.dateFormat = "yyyy-MM-dd(E)"
         
         return formatter.string(from: date)
     }
