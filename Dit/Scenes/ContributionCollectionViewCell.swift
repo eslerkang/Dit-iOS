@@ -23,15 +23,15 @@ final class ContributionCollectionViewCell: UICollectionViewCell {
         case 0:
             backgroundColor = UIColor.secondaryLabel
         case 1:
-            backgroundColor = Color.green1
+            backgroundColor = CustomColor.green1
         case 2:
-            backgroundColor = Color.green2
+            backgroundColor = CustomColor.green2
         case 3:
-            backgroundColor = Color.green3
+            backgroundColor = CustomColor.green3
         case 4:
-            backgroundColor = Color.green4
+            backgroundColor = CustomColor.green4
         default:
-            backgroundColor = Color.green5
+            backgroundColor = CustomColor.green5
         }
         
         colorView.backgroundColor = backgroundColor

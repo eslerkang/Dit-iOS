@@ -9,61 +9,117 @@ import WidgetKit
 import SwiftUI
 import Intents
 
-struct Provider: IntentTimelineProvider {
+struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: ConfigurationIntent())
+        SimpleEntry(date: Date())
     }
-
-    func getSnapshot(for configuration: ConfigurationIntent, in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), configuration: configuration)
-        completion(entry)
-    }
-
-    func getTimeline(for configuration: ConfigurationIntent, in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, configuration: configuration)
-            entries.append(entry)
-        }
-
-        let timeline = Timeline(entries: entries, policy: .atEnd)
+    
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> Void) {
+        let date = Date()
+        let entry = SimpleEntry(date: date)
+        let timeline = Timeline(entries: [entry], policy: .atEnd)
         completion(timeline)
+    }
+    
+    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
+        completion(SimpleEntry(date: Date()))
+
     }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let configuration: ConfigurationIntent
 }
 
 struct ContributionEntryView : View {
+    @Environment(\.widgetFamily) private var family
     var entry: Provider.Entry
+    
+    var rows: [GridItem] = Array(
+        repeating:
+            GridItem(.adaptive(
+                minimum: 10,
+                maximum: 500)
+            ),
+        count: 7
+    )
 
     var body: some View {
-        Text(entry.date, style: .time)
+        switch family {
+        case .systemSmall:
+            GeometryReader { g in
+                HStack(alignment: .center, spacing: 0) {
+                    LazyHGrid(rows: rows) {
+                        ForEach((0..<7*7)) { _ in
+                            Color.green
+                                .aspectRatio(1, contentMode: .fit)
+                                .cornerRadius(3)
+                        }
+                    }
+                    .frame(
+                        width: g.size.width - 20,
+                        height: g.size.height - 20,
+                        alignment: .center
+                    )
+                }
+                .frame(
+                    width: g.size.width,
+                    height: g.size.height,
+                    alignment: .center
+                )
+            }
+        case .systemMedium:
+            GeometryReader { g in
+                HStack(alignment: .center, spacing: 0) {
+                    LazyHGrid(rows: rows) {
+                        ForEach((0..<7*15)) { _ in
+                            Color.green
+                                .aspectRatio(1, contentMode: .fit)
+                                .cornerRadius(3)
+                        }
+                    }
+                    .frame(
+                        width: g.size.width - 20,
+                        height: g.size.height - 20,
+                        alignment: .center
+                    )
+                }
+                .frame(
+                    width: g.size.width,
+                    height: g.size.height,
+                    alignment: .center
+                )
+            }
+        default:
+            Text("지원하지 않는 위젯입니다.")
+        }
+
     }
 }
 
 @main
 struct Contribution: Widget {
-    let kind: String = "Contribution"
+    let kind: String = "widget.com.eslerkang.Dit"
 
     var body: some WidgetConfiguration {
-        IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
+        StaticConfiguration(
+            kind: kind,
+            provider: Provider())
+        { entry in
             ContributionEntryView(entry: entry)
         }
-        .configurationDisplayName("My Widget")
-        .description("This is an example widget.")
+        .configurationDisplayName("Dit Contributions")
+        .description("내 잔디를 볼 수 있는 위젯입니다.")
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
 struct Contribution_Previews: PreviewProvider {
     static var previews: some View {
-        ContributionEntryView(entry: SimpleEntry(date: Date(), configuration: ConfigurationIntent()))
+        ContributionEntryView(entry: SimpleEntry(date: Date()))
             .previewContext(WidgetPreviewContext(family: .systemSmall))
+        
+        ContributionEntryView(entry: SimpleEntry(date: Date()))
+            .previewContext(WidgetPreviewContext(family: .systemMedium))
     }
 }
