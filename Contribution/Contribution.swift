@@ -21,7 +21,7 @@ struct Provider: TimelineProvider {
             let date = Date()
             let timeline = Timeline(
                 entries: [SimpleEntry(date: date, contributions: contributions)],
-                policy: .atEnd
+                policy: .after(Calendar.current.date(byAdding: .minute, value: 1, to: date)!)
             )
             completion(timeline)
         }
@@ -46,7 +46,8 @@ struct Provider: TimelineProvider {
                 return 0
             }
         }
-        
+        print(count)
+                
         let container = PersistenceController.shared.container
         let context = container.viewContext
         
@@ -106,10 +107,12 @@ struct ContributionEntryView : View {
             GeometryReader { g in
                 HStack(alignment: .center, spacing: 0) {
                     LazyHGrid(rows: rows) {
-                        ForEach((0..<entry.contributions.count), id: \.self) { index in
-                            Color.green
-                                .aspectRatio(1, contentMode: .fit)
-                                .cornerRadius(3)
+                        if let data = entry.contributions {
+                            ForEach(((data.count-7*7)..<data.count), id: \.self) { index in
+                                Color.green
+                                    .aspectRatio(1, contentMode: .fit)
+                                    .cornerRadius(3)
+                            }
                         }
                     }
                     .frame(
@@ -128,10 +131,12 @@ struct ContributionEntryView : View {
             GeometryReader { g in
                 HStack(alignment: .center, spacing: 0) {
                     LazyHGrid(rows: rows) {
-                        ForEach((0..<entry.contributions.count), id: \.self) { index in
-                            Color.green
-                                .aspectRatio(1, contentMode: .fit)
-                                .cornerRadius(3)
+                        if let data = entry.contributions {
+                            ForEach(((data.count-7*15)..<data.count), id: \.self) { index in
+                                Color.green
+                                    .aspectRatio(1, contentMode: .fit)
+                                    .cornerRadius(3)
+                            }
                         }
                     }
                     .frame(
@@ -172,7 +177,8 @@ struct Contribution: Widget {
 
 struct Contribution_Previews: PreviewProvider {
     static var previews: some View {
-        ContributionEntryView(entry: SimpleEntry(date: Date(), contributions: []))
+        ContributionEntryView(
+            entry: SimpleEntry(date: Date(), contributions: []))
             .previewContext(WidgetPreviewContext(family: .systemSmall))
         
         ContributionEntryView(entry: SimpleEntry(date: Date(), contributions: []))

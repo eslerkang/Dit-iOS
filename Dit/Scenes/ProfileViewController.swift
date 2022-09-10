@@ -65,8 +65,10 @@ final class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        container = appDelegate.persistentContainer
+//        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+//        container = appDelegate.persistentContainer
+//        context = container.viewContext
+        container = PersistenceController.shared.container
         context = container.viewContext
         
         setupNavigation()
