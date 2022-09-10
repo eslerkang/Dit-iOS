@@ -8,27 +8,83 @@
 import WidgetKit
 import SwiftUI
 import Intents
+import CoreData
+
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date())
+        SimpleEntry(date: Date(), contributions: [])
     }
     
     func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> Void) {
-        let date = Date()
-        let entry = SimpleEntry(date: date)
-        let timeline = Timeline(entries: [entry], policy: .atEnd)
-        completion(timeline)
+        getTodoData { contributions in
+            let date = Date()
+            let timeline = Timeline(
+                entries: [SimpleEntry(date: date, contributions: contributions)],
+                policy: .atEnd
+            )
+            completion(timeline)
+        }
     }
     
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
-        completion(SimpleEntry(date: Date()))
+        getTodoData { contributions in
+            completion(SimpleEntry(date: Date(), contributions: contributions))
+        }
+    }
+    
+    func getTodoData(completion: @escaping ([ContributionEntity]) -> Void) {
+        @Environment(\.widgetFamily) var family
 
+        var count: Int {
+            switch family {
+            case .systemSmall:
+                return 7*7
+            case .systemMedium:
+                return 7*15
+            default:
+                return 0
+            }
+        }
+        
+        let container = PersistenceController.shared.container
+        let context = container.viewContext
+        
+        let calendar = Calendar(identifier: .gregorian)
+        let today = calendar.startOfDay(for: Date())
+        
+        var contributions = [ContributionEntity]()
+        
+        for i in 0..<count {
+            guard let startDate = calendar.date(byAdding: .day, value: -count+1+i, to: today),
+                  let endDate = calendar.date(byAdding: .day, value: 1, to: startDate)
+            else {
+                return
+            }
+            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
+            
+            let isDonePredicate = NSPredicate(format: "isDone == YES")
+            let startDatePredicate = NSPredicate(format: "updatedAt >= %@", startDate as CVarArg)
+            let endDatePredicate = NSPredicate(format: "updatedAt < %@", endDate as CVarArg)
+            
+            readRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [isDonePredicate, startDatePredicate, endDatePredicate])
+            
+            do {
+                let data = try context.fetch(readRequest)
+                contributions.append(ContributionEntity(date: startDate, commit: data.count))
+            } catch {
+                print("ERROR: \(error.localizedDescription)")
+                return
+            }
+        }
+        
+        completion(contributions)
     }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
+    let contributions: [ContributionEntity]
 }
 
 struct ContributionEntryView : View {
@@ -50,7 +106,7 @@ struct ContributionEntryView : View {
             GeometryReader { g in
                 HStack(alignment: .center, spacing: 0) {
                     LazyHGrid(rows: rows) {
-                        ForEach((0..<7*7)) { _ in
+                        ForEach((0..<entry.contributions.count), id: \.self) { index in
                             Color.green
                                 .aspectRatio(1, contentMode: .fit)
                                 .cornerRadius(3)
@@ -72,7 +128,7 @@ struct ContributionEntryView : View {
             GeometryReader { g in
                 HStack(alignment: .center, spacing: 0) {
                     LazyHGrid(rows: rows) {
-                        ForEach((0..<7*15)) { _ in
+                        ForEach((0..<entry.contributions.count), id: \.self) { index in
                             Color.green
                                 .aspectRatio(1, contentMode: .fit)
                                 .cornerRadius(3)
@@ -116,10 +172,10 @@ struct Contribution: Widget {
 
 struct Contribution_Previews: PreviewProvider {
     static var previews: some View {
-        ContributionEntryView(entry: SimpleEntry(date: Date()))
+        ContributionEntryView(entry: SimpleEntry(date: Date(), contributions: []))
             .previewContext(WidgetPreviewContext(family: .systemSmall))
         
-        ContributionEntryView(entry: SimpleEntry(date: Date()))
+        ContributionEntryView(entry: SimpleEntry(date: Date(), contributions: []))
             .previewContext(WidgetPreviewContext(family: .systemMedium))
     }
 }

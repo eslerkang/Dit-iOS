@@ -14,7 +14,7 @@ final class ProfileViewController: UIViewController {
     var container: NSPersistentContainer!
     var context: NSManagedObjectContext!
     
-    private var contributions = [Contribution]()
+    private var contributions = [ContributionEntity]()
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -138,7 +138,7 @@ private extension ProfileViewController {
             
             let data = try! context.fetch(readRequest)
             
-            contributions.append(Contribution(date: startDate, commit: data.count))
+            contributions.append(ContributionEntity(date: startDate, commit: data.count))
         }
                 
         monthCollectionView.reloadData()

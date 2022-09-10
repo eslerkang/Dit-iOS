@@ -17,7 +17,7 @@ final class ContributionCollectionViewCell: UICollectionViewCell {
         return view
     }()
     
-    func setup(contribution: Contribution) {
+    func setup(contribution: ContributionEntity) {
         var backgroundColor: UIColor
         switch contribution.commit {
         case 0:
