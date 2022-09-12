@@ -13,10 +13,12 @@ struct PersistenceController {
     let container: NSPersistentCloudKitContainer
     
     init() {
-        container = NSPersistentCloudKitContainer(name: "Dit")
+        let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.eslerkang.dit")!
+        let storeURL = containerURL.appendingPathComponent("Dit.sqlite")
+        let description = NSPersistentStoreDescription(url: storeURL)
         
-        let description = container.persistentStoreDescriptions.first
-        description?.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+        container = NSPersistentCloudKitContainer(name: "Dit")
+        container.persistentStoreDescriptions = [description]
         
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {

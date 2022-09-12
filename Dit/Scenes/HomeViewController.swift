@@ -43,8 +43,7 @@ final class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        container = appDelegate.persistentContainer
+        container = PersistenceController.shared.container
         context = container.viewContext
         
         authorizeNotification()
@@ -320,6 +319,7 @@ private extension HomeViewController {
     func reloadTableView() {
         tableView.reloadData()
         UIApplication.shared.applicationIconBadgeNumber = todos.count
+        
     }
     
     func authorizeNotification() {

@@ -12,6 +12,12 @@ import CoreData
 
 
 struct Provider: TimelineProvider {
+    var managedObjectContext: NSManagedObjectContext
+    
+    init(context: NSManagedObjectContext) {
+        self.managedObjectContext = context
+    }
+    
     func placeholder(in context: Context) -> SimpleEntry {
         SimpleEntry(date: Date(), contributions: [])
     }
@@ -36,28 +42,17 @@ struct Provider: TimelineProvider {
     func getTodoData(completion: @escaping ([ContributionEntity]) -> Void) {
         @Environment(\.widgetFamily) var family
 
-        var count: Int {
-            switch family {
-            case .systemSmall:
-                return 7*7
-            case .systemMedium:
-                return 7*15
-            default:
-                return 0
-            }
-        }
-        print(count)
-                
-        let container = PersistenceController.shared.container
-        let context = container.viewContext
+        let count = 7*15
         
+        let context = managedObjectContext
+
         let calendar = Calendar(identifier: .gregorian)
         let today = calendar.startOfDay(for: Date())
         
         var contributions = [ContributionEntity]()
         
-        for i in 0..<count {
-            guard let startDate = calendar.date(byAdding: .day, value: -count+1+i, to: today),
+        for i in 1...count {
+            guard let startDate = calendar.date(byAdding: .day, value: -count+i, to: today),
                   let endDate = calendar.date(byAdding: .day, value: 1, to: startDate)
             else {
                 return
@@ -69,7 +64,7 @@ struct Provider: TimelineProvider {
             let endDatePredicate = NSPredicate(format: "updatedAt < %@", endDate as CVarArg)
             
             readRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [isDonePredicate, startDatePredicate, endDatePredicate])
-            
+
             do {
                 let data = try context.fetch(readRequest)
                 contributions.append(ContributionEntity(date: startDate, commit: data.count))
@@ -78,7 +73,6 @@ struct Provider: TimelineProvider {
                 return
             }
         }
-        
         completion(contributions)
     }
 }
@@ -109,9 +103,32 @@ struct ContributionEntryView : View {
                     LazyHGrid(rows: rows) {
                         if let data = entry.contributions {
                             ForEach(((data.count-7*7)..<data.count), id: \.self) { index in
-                                Color.green
-                                    .aspectRatio(1, contentMode: .fit)
-                                    .cornerRadius(3)
+                                switch data[index].commit {
+                                case 0:
+                                    Color.gray
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                case 1:
+                                    Color(CustomColor.green1)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                case 2:
+                                    Color(CustomColor.green2)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                case 3:
+                                    Color(CustomColor.green3)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                case 4:
+                                    Color(CustomColor.green4)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                default:
+                                    Color(CustomColor.green5)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                }
                             }
                         }
                     }
@@ -133,9 +150,32 @@ struct ContributionEntryView : View {
                     LazyHGrid(rows: rows) {
                         if let data = entry.contributions {
                             ForEach(((data.count-7*15)..<data.count), id: \.self) { index in
-                                Color.green
-                                    .aspectRatio(1, contentMode: .fit)
-                                    .cornerRadius(3)
+                                switch data[index].commit {
+                                case 0:
+                                    Color.gray
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                case 1:
+                                    Color(CustomColor.green1)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                case 2:
+                                    Color(CustomColor.green2)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                case 3:
+                                    Color(CustomColor.green3)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                case 4:
+                                    Color(CustomColor.green4)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                default:
+                                    Color(CustomColor.green5)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .cornerRadius(3)
+                                }
                             }
                         }
                     }
@@ -162,10 +202,12 @@ struct ContributionEntryView : View {
 struct Contribution: Widget {
     let kind: String = "widget.com.eslerkang.Dit"
 
+    var container = PersistenceController.shared.container
+    
     var body: some WidgetConfiguration {
         StaticConfiguration(
             kind: kind,
-            provider: Provider())
+            provider: Provider(context: container.viewContext))
         { entry in
             ContributionEntryView(entry: entry)
         }
