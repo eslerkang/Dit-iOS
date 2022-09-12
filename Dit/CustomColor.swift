@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 
-final class Color {
+final class CustomColor {
     static let green1 = UIColor(red: 235/255, green: 251/255, blue: 238/255, alpha: 1)
     static let green2 = UIColor(red: 178/255, green: 242/255, blue: 187/255, alpha: 1)
     static let green3 = UIColor(red: 105/255, green: 219/255, blue: 124/255, alpha: 1)

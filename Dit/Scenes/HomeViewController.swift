@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import CoreData
+import WidgetKit
 import UserNotifications
 
 
@@ -15,8 +16,8 @@ final class HomeViewController: UIViewController {
     var container: NSPersistentContainer!
     var context: NSManagedObjectContext!
     
-    private var todos = [Todo]()
-    private var done = [Todo]()
+    private var todos = [TodoEntity]()
+    private var done = [TodoEntity]()
     
     private lazy var searchController: UISearchController = {
         let searchController = UISearchController()
@@ -43,8 +44,7 @@ final class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        container = appDelegate.persistentContainer
+        container = PersistenceController.shared.container
         context = container.viewContext
         
         authorizeNotification()
@@ -52,6 +52,8 @@ final class HomeViewController: UIViewController {
         setupNavigation()
         setupLayout()
         fetchTodos()
+        
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 
@@ -83,7 +85,7 @@ extension HomeViewController: UISearchBarDelegate {
             return
         }
         
-        todos.append(Todo(text: text, isDone: false, createdAt: date, uuid: uuid, updatedAt: date))
+        todos.append(TodoEntity(text: text, isDone: false, createdAt: date, uuid: uuid, updatedAt: date))
         searchController.isActive = false
         reloadTableView()
     }
@@ -271,7 +273,7 @@ private extension HomeViewController {
             else {
                 return nil
             }
-            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
+            return TodoEntity(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
         }
         
         let readDoneRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
@@ -291,7 +293,7 @@ private extension HomeViewController {
             else {
                 return nil
             }
-            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
+            return TodoEntity(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
         }
 
         reloadTableView()
@@ -320,6 +322,8 @@ private extension HomeViewController {
     func reloadTableView() {
         tableView.reloadData()
         UIApplication.shared.applicationIconBadgeNumber = todos.count
+        WidgetCenter.shared.reloadAllTimelines()
+        
     }
     
     func authorizeNotification() {

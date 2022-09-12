@@ -14,7 +14,7 @@ final class ProfileViewController: UIViewController {
     var container: NSPersistentContainer!
     var context: NSManagedObjectContext!
     
-    private var contributions = [Contribution]()
+    private var contributions = [ContributionEntity]()
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -65,8 +65,10 @@ final class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        container = appDelegate.persistentContainer
+//        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+//        container = appDelegate.persistentContainer
+//        context = container.viewContext
+        container = PersistenceController.shared.container
         context = container.viewContext
         
         setupNavigation()
@@ -138,9 +140,8 @@ private extension ProfileViewController {
             
             let data = try! context.fetch(readRequest)
             
-            contributions.append(Contribution(date: startDate, commit: data.count))
+            contributions.append(ContributionEntity(date: startDate, commit: data.count))
         }
-                
         monthCollectionView.reloadData()
     }
     

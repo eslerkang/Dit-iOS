@@ -2,7 +2,7 @@
 //  Todos+CoreDataProperties.swift
 //  Dit
 //
-//  Created by 강태준 on 2022/09/07.
+//  Created by 강태준 on 2022/09/12.
 //
 //
 
@@ -16,11 +16,11 @@ extension Todos {
         return NSFetchRequest<Todos>(entityName: "Todos")
     }
 
-    @NSManaged public var createdAt: Date?
-    @NSManaged public var isDone: Bool
-    @NSManaged public var text: String?
     @NSManaged public var uuid: UUID?
+    @NSManaged public var createdAt: Date?
     @NSManaged public var updatedAt: Date?
+    @NSManaged public var text: String?
+    @NSManaged public var isDone: Bool
 
 }
 
