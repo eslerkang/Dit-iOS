@@ -62,9 +62,8 @@ struct Provider: TimelineProvider {
             let isDonePredicate = NSPredicate(format: "isDone == YES")
             let startDatePredicate = NSPredicate(format: "updatedAt >= %@", startDate as CVarArg)
             let endDatePredicate = NSPredicate(format: "updatedAt < %@", endDate as CVarArg)
-            
             readRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [isDonePredicate, startDatePredicate, endDatePredicate])
-
+            
             do {
                 let data = try context.fetch(readRequest)
                 contributions.append(ContributionEntity(date: startDate, commit: data.count))

@@ -52,6 +52,8 @@ final class HomeViewController: UIViewController {
         setupNavigation()
         setupLayout()
         fetchTodos()
+        
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 

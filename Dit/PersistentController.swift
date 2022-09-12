@@ -16,7 +16,8 @@ struct PersistenceController {
         let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.eslerkang.dit")!
         let storeURL = containerURL.appendingPathComponent("Dit.sqlite")
         let description = NSPersistentStoreDescription(url: storeURL)
-        
+        description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+
         container = NSPersistentCloudKitContainer(name: "Dit")
         container.persistentStoreDescriptions = [description]
         
