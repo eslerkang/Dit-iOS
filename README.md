@@ -26,6 +26,9 @@
 - Add App Store informations
 ### 1.0.2
 - Change Toast message remaining time
+### 1.1.0
+- Add Widget
+- Small, Medium Widgets available
 
 ## :sparkles: Skills & Tech Stack
 UIKit, Snapkit, CoreData
