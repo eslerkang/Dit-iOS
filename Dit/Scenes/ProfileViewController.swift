@@ -142,7 +142,6 @@ private extension ProfileViewController {
             
             contributions.append(ContributionEntity(date: startDate, commit: data.count))
         }
-        print(contributions)
         monthCollectionView.reloadData()
     }
     

@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import CoreData
+import WidgetKit
 import UserNotifications
 
 
@@ -319,6 +320,7 @@ private extension HomeViewController {
     func reloadTableView() {
         tableView.reloadData()
         UIApplication.shared.applicationIconBadgeNumber = todos.count
+        WidgetCenter.shared.reloadAllTimelines()
         
     }
     

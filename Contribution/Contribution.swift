@@ -18,24 +18,24 @@ struct Provider: TimelineProvider {
         self.managedObjectContext = context
     }
     
-    func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), contributions: [])
+    func placeholder(in context: Context) -> ContributionEntry {
+        ContributionEntry(date: Date(), contributions: [])
     }
     
-    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (Timeline<ContributionEntry>) -> Void) {
         getTodoData { contributions in
             let date = Date()
             let timeline = Timeline(
-                entries: [SimpleEntry(date: date, contributions: contributions)],
-                policy: .after(Calendar.current.date(byAdding: .minute, value: 1, to: date)!)
+                entries: [ContributionEntry(date: date, contributions: contributions)],
+                policy: .atEnd
             )
             completion(timeline)
         }
     }
     
-    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
+    func getSnapshot(in context: Context, completion: @escaping (ContributionEntry) -> Void) {
         getTodoData { contributions in
-            completion(SimpleEntry(date: Date(), contributions: contributions))
+            completion(ContributionEntry(date: Date(), contributions: contributions))
         }
     }
     
@@ -77,7 +77,7 @@ struct Provider: TimelineProvider {
     }
 }
 
-struct SimpleEntry: TimelineEntry {
+struct ContributionEntry: TimelineEntry {
     let date: Date
     let contributions: [ContributionEntity]
 }
@@ -220,10 +220,10 @@ struct Contribution: Widget {
 struct Contribution_Previews: PreviewProvider {
     static var previews: some View {
         ContributionEntryView(
-            entry: SimpleEntry(date: Date(), contributions: []))
+            entry: ContributionEntry(date: Date(), contributions: []))
             .previewContext(WidgetPreviewContext(family: .systemSmall))
         
-        ContributionEntryView(entry: SimpleEntry(date: Date(), contributions: []))
+        ContributionEntryView(entry: ContributionEntry(date: Date(), contributions: []))
             .previewContext(WidgetPreviewContext(family: .systemMedium))
     }
 }
