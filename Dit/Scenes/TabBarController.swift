@@ -8,11 +8,15 @@
 import UIKit
 import SnapKit
 
+import FirebaseAuth
+
 
 final class TabBarController: UITabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
+        try? Auth.auth().signOut()
         
+        view.backgroundColor = .systemBackground
         setupTabBar()
     }
 }
