@@ -8,7 +8,7 @@
 import Foundation
 
 
-struct ContributionEntity {
+struct Contribution {
     let date: Date
     let commit: Int
 }

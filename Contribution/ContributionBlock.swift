@@ -18,28 +18,28 @@ struct Provider: TimelineProvider {
         self.managedObjectContext = context
     }
     
-    func placeholder(in context: Context) -> ContributionEntry {
-        ContributionEntry(date: Date(), contributions: [])
+    func placeholder(in context: Context) -> ContributionBlockEntry {
+        ContributionBlockEntry(date: Date(), contributions: [])
     }
     
-    func getTimeline(in context: Context, completion: @escaping (Timeline<ContributionEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (Timeline<ContributionBlockEntry>) -> Void) {
         getTodoData { contributions in
             let date = Date()
             let timeline = Timeline(
-                entries: [ContributionEntry(date: date, contributions: contributions)],
+                entries: [ContributionBlockEntry(date: date, contributions: contributions)],
                 policy: .atEnd
             )
             completion(timeline)
         }
     }
     
-    func getSnapshot(in context: Context, completion: @escaping (ContributionEntry) -> Void) {
+    func getSnapshot(in context: Context, completion: @escaping (ContributionBlockEntry) -> Void) {
         getTodoData { contributions in
-            completion(ContributionEntry(date: Date(), contributions: contributions))
+            completion(ContributionBlockEntry(date: Date(), contributions: contributions))
         }
     }
     
-    func getTodoData(completion: @escaping ([ContributionEntity]) -> Void) {
+    func getTodoData(completion: @escaping ([Contribution]) -> Void) {
         @Environment(\.widgetFamily) var family
 
         let count = 7*15
@@ -49,7 +49,7 @@ struct Provider: TimelineProvider {
         let calendar = Calendar(identifier: .gregorian)
         let today = calendar.startOfDay(for: Date())
         
-        var contributions = [ContributionEntity]()
+        var contributions = [Contribution]()
         
         for i in 1...count {
             guard let startDate = calendar.date(byAdding: .day, value: -count+i, to: today),
@@ -66,7 +66,7 @@ struct Provider: TimelineProvider {
             
             do {
                 let data = try context.fetch(readRequest)
-                contributions.append(ContributionEntity(date: startDate, commit: data.count))
+                contributions.append(Contribution(date: startDate, commit: data.count))
             } catch {
                 print("ERROR: \(error.localizedDescription)")
                 return
@@ -76,12 +76,12 @@ struct Provider: TimelineProvider {
     }
 }
 
-struct ContributionEntry: TimelineEntry {
+struct ContributionBlockEntry: TimelineEntry {
     let date: Date
-    let contributions: [ContributionEntity]
+    let contributions: [Contribution]
 }
 
-struct ContributionEntryView : View {
+struct ContributionBlockEntryView : View {
     @Environment(\.widgetFamily) private var family
     var entry: Provider.Entry
     
@@ -198,7 +198,7 @@ struct ContributionEntryView : View {
 }
 
 @main
-struct Contribution: Widget {
+struct ContributionBlock: Widget {
     let kind: String = "widget.com.eslerkang.Dit"
 
     var container = PersistenceController.shared.container
@@ -208,7 +208,7 @@ struct Contribution: Widget {
             kind: kind,
             provider: Provider(context: container.viewContext))
         { entry in
-            ContributionEntryView(entry: entry)
+            ContributionBlockEntryView(entry: entry)
         }
         .configurationDisplayName("Dit Contributions")
         .description("내 잔디를 볼 수 있는 위젯입니다.")
@@ -216,13 +216,13 @@ struct Contribution: Widget {
     }
 }
 
-struct Contribution_Previews: PreviewProvider {
+struct ContributionBlock_Previews: PreviewProvider {
     static var previews: some View {
-        ContributionEntryView(
-            entry: ContributionEntry(date: Date(), contributions: []))
+        ContributionBlockEntryView(
+            entry: ContributionBlockEntry(date: Date(), contributions: []))
             .previewContext(WidgetPreviewContext(family: .systemSmall))
         
-        ContributionEntryView(entry: ContributionEntry(date: Date(), contributions: []))
+        ContributionBlockEntryView(entry: ContributionBlockEntry(date: Date(), contributions: []))
             .previewContext(WidgetPreviewContext(family: .systemMedium))
     }
 }

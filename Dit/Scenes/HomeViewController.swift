@@ -16,8 +16,8 @@ final class HomeViewController: UIViewController {
     var container: NSPersistentContainer!
     var context: NSManagedObjectContext!
     
-    private var todos = [TodoEntity]()
-    private var done = [TodoEntity]()
+    private var todos = [Todo]()
+    private var done = [Todo]()
     
     private lazy var searchController: UISearchController = {
         let searchController = UISearchController()
@@ -85,7 +85,7 @@ extension HomeViewController: UISearchBarDelegate {
             return
         }
         
-        todos.append(TodoEntity(text: text, isDone: false, createdAt: date, uuid: uuid, updatedAt: date))
+        todos.append(Todo(text: text, isDone: false, createdAt: date, uuid: uuid, updatedAt: date))
         searchController.isActive = false
         reloadTableView()
     }
@@ -273,7 +273,7 @@ private extension HomeViewController {
             else {
                 return nil
             }
-            return TodoEntity(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
+            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
         }
         
         let readDoneRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
@@ -293,7 +293,7 @@ private extension HomeViewController {
             else {
                 return nil
             }
-            return TodoEntity(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
+            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
         }
 
         reloadTableView()

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct UserEntity: Codable {
+struct User: Codable {
     var displayname: String
     var id: String
     var createdAt: Date

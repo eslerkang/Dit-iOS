@@ -8,7 +8,7 @@
 import Foundation
 
 
-struct TodoEntity {
+struct Todo {
     let text: String
     var isDone: Bool
     let createdAt: Date
