@@ -138,6 +138,7 @@ extension LoginViewController: ASAuthorizationControllerDelegate, ASAuthorizatio
                 self.db.collection("users").document(user.uid).getDocument { documentSnapshot, error in
                     if let error {
                         print("ERROR: \(error.localizedDescription)")
+                        try? Auth.auth().signOut()
                         return
                     }
                     
@@ -158,6 +159,7 @@ extension LoginViewController: ASAuthorizationControllerDelegate, ASAuthorizatio
                         self.db.collection("users").document(user.uid).setData(userData) { error in
                             if let error {
                                 print("ERROR: \(error.localizedDescription)")
+                                try? Auth.auth().signOut()
                             }
                             
                             self.goToTabBarController()
