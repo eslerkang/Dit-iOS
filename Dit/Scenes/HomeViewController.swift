@@ -6,15 +6,17 @@
 //
 
 import UIKit
-import SnapKit
-import CoreData
-import WidgetKit
 import UserNotifications
+
+import SnapKit
+import CodableFirebase
+import FirebaseAuth
+import FirebaseFirestore
 
 
 final class HomeViewController: UIViewController {
-    var container: NSPersistentContainer!
-    var context: NSManagedObjectContext!
+    private let db = Firestore.firestore()
+    private var user: User?
     
     private var todos = [Todo]()
     private var done = [Todo]()
@@ -44,23 +46,19 @@ final class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        container = PersistenceController.shared.container
-        context = container.viewContext
-        
         authorizeNotification()
         
         setupNavigation()
         setupLayout()
         fetchTodos()
-        
-        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 
 
 extension HomeViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        guard let text = searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+        guard let user = Auth.auth().currentUser,
+              let text = searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !text.isEmpty
         else {
             searchController.isActive = false
@@ -69,23 +67,27 @@ extension HomeViewController: UISearchBarDelegate {
         let date = Date()
         let uuid = UUID()
         
-        let todo = Todos(context: container.viewContext)
-        todo.text = text
-        todo.isDone = false
-        todo.createdAt = date
-        todo.uuid = uuid
-        todo.updatedAt = date
+        let todo = Todo(
+            text: text,
+            isDone: false,
+            createdAt: date,
+            updatedAt: date,
+            userId: user.uid,
+            uuid: uuid.uuidString
+        )
         
-        view.endEditing(true)
-
-        do {
-            try container.viewContext.save()
-        } catch {
-            print("ERROR: Creating Todo / \(error.localizedDescription)")
-            return
+        let todoData = try! FirestoreEncoder().encode(todo)
+        
+        db.collection("todos").document(uuid.uuidString).setData(todoData) { error in
+            if let error {
+                print("ERROR: \(error.localizedDescription)")
+            }
         }
+ 
+        view.endEditing(true)
+       
+        todos.append(todo)
         
-        todos.append(Todo(text: text, isDone: false, createdAt: date, uuid: uuid, updatedAt: date))
         searchController.isActive = false
         reloadTableView()
     }
@@ -108,26 +110,14 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
                     var todo = self.todos[indexPath.row]
                     todo.isDone = true
                     todo.updatedAt = date
-                    
-                    let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-                    readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
-                    
-                    do {
-                        let data = try self.context.fetch(readRequest)
-                        let targetTodo = data[0]
-                        
-                        targetTodo.setValue(true, forKey: "isDone")
-                        targetTodo.setValue(date, forKey: "updatedAt")
-                        
-                        try self.context.save()
-                    } catch {
-                        print("ERROR: Commiting todo / \(error.localizedDescription)")
-                        return
-                    }
-                    
+                
+                    self.updateTodo(todo: todo)
+                
                     self.todos.remove(at: indexPath.row)
                     self.done.append(todo)
+                    
                     self.reloadTableView()
+                    
                     handler(true)
                 }
             
@@ -137,26 +127,15 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
                 style: .destructive,
                 title: "reset") { action, view, handler in
                     var todo = self.done[indexPath.row]
+
                     todo.isDone = false
                     todo.updatedAt = date
                     
-                    let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-                    readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
+                    self.updateTodo(todo: todo)
                     
-                    do {
-                        let data = try self.context.fetch(readRequest)
-                        let targetTodo = data[0]
-                        
-                        targetTodo.setValue(false, forKey: "isDone")
-                        targetTodo.setValue(date, forKey: "updatedAt")
-                        
-                        try self.context.save()
-                    } catch {
-                        print("ERROR: Reseting Todo / \(error.localizedDescription)")
-                        return
-                    }
                     self.done.remove(at: indexPath.row)
                     self.todos.append(todo)
+                    
                     self.reloadTableView()
                     handler(true)
                 }
@@ -178,20 +157,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if indexPath.section == 0 {
             let todo = todos[indexPath.row]
-            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-            readRequest.predicate = NSPredicate(format: "uuid == %@", todo.uuid as CVarArg)
             
-            do {
-                let data = try context.fetch(readRequest)
-                let targetTodo = data[0]
-                
-                context.delete(targetTodo)
-                
-                try context.save()
-            } catch {
-                print("ERROR: Deleting row at \(indexPath.row) / \(error.localizedDescription)")
-                return
-            }
+            self.db.collection("todos").document(todo.uuid).delete()
             
             todos.remove(at: indexPath.row)
             reloadTableView()
@@ -201,9 +168,9 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0:
-            return todos.count
+             return todos.count
         case 1:
-            return done.count
+             return done.count
         default:
             return 0
         }
@@ -252,49 +219,100 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
 
 
 private extension HomeViewController {
+    func updateTodo(todo: Todo) {
+        let todoData = try! FirestoreEncoder().encode(todo)
+        db.collection("todos").document(todo.uuid).setData(todoData) { error in
+            if let error {
+                print("ERROR: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     func fetchTodos() {
         let calnedar = Calendar(identifier: .gregorian)
         let today = calnedar.startOfDay(for: Date())
-        guard let tomorrow = calnedar.date(byAdding: .day, value: 1, to: today)
+        guard let tomorrow = calnedar.date(byAdding: .day, value: 1, to: today),
+              let user = Auth.auth().currentUser
         else {
             return
         }
         
-        let readTodosRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-        readTodosRequest.predicate = NSPredicate(format: "isDone == NO")
-        let todosData = try! context.fetch(readTodosRequest)
-        
-        self.todos = todosData.compactMap { todo in
-            guard let text = todo.value(forKey: "text") as? String,
-                  let isDone = todo.value(forKey: "isDone") as? Bool,
-                  let createdAt = todo.value(forKey: "createdAt") as? Date,
-                  let updatedAt = todo.value(forKey: "updatedAt") as? Date,
-                  let uuid = todo.value(forKey: "uuid") as? UUID
-            else {
-                return nil
+        db.collection("todos")
+            .whereField("isDone", isEqualTo: false)
+            .whereField("userId", isEqualTo: user.uid)
+            .getDocuments { querySnapshot, error in
+                if let error {
+                    print("ERROR: \(error.localizedDescription)")
+                }
+                
+                guard let snapshot = querySnapshot
+                else {
+                    print("ERROR: Fetching snapshots")
+                    return
+                }
+                
+                let documents = snapshot.documents
+                
+                self.todos = documents.compactMap { document in
+                    var data = document.data()
+                    
+                    guard let updatedAt = data["updatedAt"] as? Timestamp,
+                            let createdAt = data["createdAt"] as? Timestamp
+                    else {
+                        return nil
+                    }
+                    data["updatedAt"] = updatedAt.dateValue()
+                    data["createdAt"] = createdAt.dateValue()
+                    
+                    do {
+                        return try FirestoreDecoder().decode(Todo.self, from: data)
+                    } catch {
+                        print("ERROR: \(error.localizedDescription)")
+                        return nil
+                    }
+                }
+                
+                self.reloadTableView()
             }
-            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
-        }
-        
-        let readDoneRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-        let todayPredicate = NSPredicate(format: "updatedAt >= %@", today as CVarArg)
-        let tomorrowPredicate = NSPredicate(format: "updatedAt < %@", tomorrow as CVarArg)
-        let isDonePredicate = NSPredicate(format: "isDone == YES")
-        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: [todayPredicate, tomorrowPredicate, isDonePredicate])
-        readDoneRequest.predicate = compound
-        let doneData = try! context.fetch(readDoneRequest)
-        
-        self.done = doneData.compactMap { todo in
-            guard let text = todo.value(forKey: "text") as? String,
-                  let isDone = todo.value(forKey: "isDone") as? Bool,
-                  let createdAt = todo.value(forKey: "createdAt") as? Date,
-                  let updatedAt = todo.value(forKey: "updatedAt") as? Date,
-                  let uuid = todo.value(forKey: "uuid") as? UUID
-            else {
-                return nil
+                
+        db.collection("todos")
+            .whereField("isDone", isEqualTo: true)
+            .whereField("userId", isEqualTo: user.uid)
+            .whereField("updatedAt", isGreaterThanOrEqualTo: today)
+            .whereField("updatedAt", isLessThan: tomorrow)
+            .getDocuments { querySnapshot, error in
+                if let error {
+                    print("ERROR: \(error.localizedDescription)")
+                }
+                guard let snapshot = querySnapshot
+                else {
+                    print("ERROR: Fetching snapshots")
+                    return
+                }
+                
+                let documents = snapshot.documents
+                
+                self.done = documents.compactMap { document in
+                    var data = document.data()
+                    
+                    guard let updatedAt = data["updatedAt"] as? Timestamp,
+                            let createdAt = data["createdAt"] as? Timestamp
+                    else {
+                        return nil
+                    }
+                    data["updatedAt"] = updatedAt.dateValue()
+                    data["createdAt"] = createdAt.dateValue()
+
+                    do {
+                        return try FirestoreDecoder().decode(Todo.self, from: data)
+                    } catch {
+                        print("ERROR: \(error.localizedDescription)")
+                        return nil
+                    }
+                    
+                }
+                self.reloadTableView()
             }
-            return Todo(text: text, isDone: isDone, createdAt: createdAt, uuid: uuid, updatedAt: updatedAt)
-        }
 
         reloadTableView()
     }
@@ -321,9 +339,7 @@ private extension HomeViewController {
     
     func reloadTableView() {
         tableView.reloadData()
-        UIApplication.shared.applicationIconBadgeNumber = todos.count
-        WidgetCenter.shared.reloadAllTimelines()
-        
+        UIApplication.shared.applicationIconBadgeNumber = todos.count        
     }
     
     func authorizeNotification() {

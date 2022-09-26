@@ -8,10 +8,11 @@
 import Foundation
 
 
-struct Todo {
+struct Todo: Codable {
     let text: String
     var isDone: Bool
     let createdAt: Date
-    let uuid: UUID
     var updatedAt: Date
+    let userId: String
+    let uuid: String
 }

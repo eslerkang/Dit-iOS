@@ -6,13 +6,15 @@
 //
 
 import UIKit
+
 import SnapKit
-import CoreData
+import FirebaseFirestore
+import CodableFirebase
+import FirebaseAuth
 
 
 final class ProfileViewController: UIViewController {
-    var container: NSPersistentContainer!
-    var context: NSManagedObjectContext!
+    private let db = Firestore.firestore()
     
     private var contributions = [Contribution]()
     
@@ -65,16 +67,10 @@ final class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-//        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-//        container = appDelegate.persistentContainer
-//        context = container.viewContext
-        container = PersistenceController.shared.container
-        context = container.viewContext
-        
         setupNavigation()
         setupLayout()
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
@@ -120,29 +116,62 @@ extension ProfileViewController: UICollectionViewDelegateFlowLayout, UICollectio
 private extension ProfileViewController {
     func fetchData() {
         let calendar = Calendar(identifier: .gregorian)
-        let today = calendar.startOfDay(for: Date())
-        
-        contributions = []
-        
-        for i in 0..<35 {
-            guard let startDate = calendar.date(byAdding: .day, value: -34+i, to: today),
-                  let endDate = calendar.date(byAdding: .day, value: 1, to: startDate)
-            else {
-                return
-            }
-            let readRequest = NSFetchRequest<NSManagedObject>(entityName: "Todos")
-            
-            let isDonePredicate = NSPredicate(format: "isDone == YES")
-            let startDatePredicate = NSPredicate(format: "updatedAt >= %@", startDate as CVarArg)
-            let endDatePredicate = NSPredicate(format: "updatedAt < %@", endDate as CVarArg)
-            
-            readRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [isDonePredicate, startDatePredicate, endDatePredicate])
-            
-            let data = try! context.fetch(readRequest)
-            
-            contributions.append(Contribution(date: startDate, commit: data.count))
+        guard let originDate = calendar.date(byAdding: .day, value: -34, to: Date()),
+              let user = Auth.auth().currentUser
+        else {
+            return
         }
-        monthCollectionView.reloadData()
+        
+        let startOfOriginDate = calendar.startOfDay(for: originDate)
+        
+        db.collection("todos")
+            .whereField("userId", isEqualTo: user.uid)
+            .whereField("isDone", isEqualTo: true)
+            .whereField("updatedAt", isGreaterThanOrEqualTo: startOfOriginDate)
+            .getDocuments { querySnapshot, error in
+                if let error {
+                    print("ERROR: \(error.localizedDescription)")
+                }
+                
+                guard let snapshot = querySnapshot
+                else {
+                    print("ERROR: Fetching snapshots")
+                    return
+                }
+                
+                let documents = snapshot.documents
+                
+                var contributionCount = [Int](repeating: 0, count: 35)
+                
+                documents.forEach { document in
+                    let data = document.data()
+                    
+                    guard let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue()
+                    else {
+                        return
+                    }
+                                        
+                    let startOfUpdatedAt = calendar.startOfDay(for: updatedAt)
+                    guard let offset = calendar.dateComponents([.day], from: startOfOriginDate, to: startOfUpdatedAt).day
+                    else {
+                        return
+                    }
+                    contributionCount[offset] += 1
+                }
+                
+                var contributions = [Contribution]()
+                
+                for i in 0...34 {
+                    guard let contributionDate = calendar.date(byAdding: .day, value: i, to: startOfOriginDate)
+                    else {
+                        return
+                    }
+                    contributions.append(Contribution(date: contributionDate, commit: contributionCount[i]))
+                }
+                
+                self.contributions = contributions
+                self.monthCollectionView.reloadData()
+            }
     }
     
     func setupNavigation() {

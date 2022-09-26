@@ -148,7 +148,7 @@ extension LoginViewController: ASAuthorizationControllerDelegate, ASAuthorizatio
                     } else {
                         let currentDate = Date()
                         let displayname = user.displayName ?? user.email ?? "user"
-                        let userEntity = User(
+                        let userEntity = UserInfo(
                             displayname: displayname,
                             id: user.uid,
                             createdAt: currentDate,

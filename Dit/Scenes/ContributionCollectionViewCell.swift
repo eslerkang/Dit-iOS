@@ -19,19 +19,22 @@ final class ContributionCollectionViewCell: UICollectionViewCell {
     
     func setup(contribution: Contribution) {
         var backgroundColor: UIColor
+        
+        let customColor: CustomColor = Green()
+        
         switch contribution.commit {
         case 0:
             backgroundColor = UIColor.secondaryLabel
         case 1:
-            backgroundColor = CustomColor.green1
+            backgroundColor = customColor.color1
         case 2:
-            backgroundColor = CustomColor.green2
+            backgroundColor = customColor.color2
         case 3:
-            backgroundColor = CustomColor.green3
+            backgroundColor = customColor.color3
         case 4:
-            backgroundColor = CustomColor.green4
+            backgroundColor = customColor.color4
         default:
-            backgroundColor = CustomColor.green5
+            backgroundColor = customColor.color5
         }
         
         colorView.backgroundColor = backgroundColor
