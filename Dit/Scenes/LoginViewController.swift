@@ -12,10 +12,13 @@ import AuthenticationServices
 import SnapKit
 import FirebaseAuth
 import FirebaseFirestore
+import CodableFirebase
 
 
 final class LoginViewController: UIViewController {
     fileprivate var currentNonce: String?
+    
+    private let db = Firestore.firestore()
     
     private lazy var image: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "icon"))
@@ -126,16 +129,41 @@ extension LoginViewController: ASAuthorizationControllerDelegate, ASAuthorizatio
                     print(error.localizedDescription)
                     return
                 }
-                
+                                
                 guard let user = authResult?.user
                 else {
                     return
                 }
                 
-                let tabBarController = TabBarController()
-                tabBarController.modalPresentationStyle = .fullScreen
-                self.show(tabBarController, sender: nil)
-
+                self.db.collection("users").document(user.uid).getDocument { documentSnapshot, error in
+                    if let error {
+                        print("ERROR: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    if let documentSnapshot,
+                       documentSnapshot.exists {
+                        self.goToTabBarController()
+                    } else {
+                        let currentDate = Date()
+                        let displayname = user.displayName ?? user.email ?? "user"
+                        let userEntity = UserEntity(
+                            displayname: displayname,
+                            id: user.uid,
+                            createdAt: currentDate,
+                            isActive: true,
+                            updatedAt: currentDate
+                        )
+                        let userData = try! FirestoreEncoder().encode(userEntity)
+                        self.db.collection("users").document(user.uid).setData(userData) { error in
+                            if let error {
+                                print("ERROR: \(error.localizedDescription)")
+                            }
+                            
+                            self.goToTabBarController()
+                        }
+                    }
+                }
             }
         }
     }
@@ -165,5 +193,11 @@ private extension LoginViewController {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(image.snp.bottom).offset(150)
         }
+    }
+    
+    func goToTabBarController() {
+        let tabBarController = TabBarController()
+        tabBarController.modalPresentationStyle = .fullScreen
+        self.show(tabBarController, sender: nil)
     }
 }
