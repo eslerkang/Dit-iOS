@@ -193,7 +193,9 @@ private extension LoginViewController {
         
         appleLoginButton.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(image.snp.bottom).offset(150)
+            $0.width.equalTo(200)
+            $0.height.equalTo(50)
+            $0.top.equalTo(image.snp.bottom).offset(300)
         }
     }
     
